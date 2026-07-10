@@ -40,10 +40,15 @@ All settings are controlled through `.env`. See `.env.example` for the full list
 | `SERVER_PORT` | Host port mapped to the server | `25565` |
 | `SERVER_TYPE` | Server software (`VANILLA`, `PAPER`, `FABRIC`, `FORGE`, ...) | `VANILLA` |
 | `SERVER_VERSION` | Minecraft version | `LATEST` |
-| `SERVER_MEMORY` | Memory allocated to the JVM | `4G` |
+| `SERVER_MEMORY` | Memory allocated to the JVM heap | `4G` |
+| `CONTAINER_MEMORY_LIMIT` | Hard memory cap for the container | `5G` |
 | `DIFFICULTY` | `peaceful`, `easy`, `normal`, `hard` | `normal` |
 | `GAME_MODE` | `survival`, `creative`, `adventure`, `spectator` | `survival` |
+| `MOTD` | Description players see in their multiplayer list | `A Minecraft Server` |
+| `SERVER_ICON` | URL or local path to a server icon image | (empty) |
 | `MAX_PLAYERS` | Maximum concurrent players | `20` |
+| `VIEW_DISTANCE` | Chunk render distance, in chunks | `8` |
+| `SIMULATION_DISTANCE` | Chunk simulation (tick/mob AI) distance, in chunks | `6` |
 | `ENABLE_WHITELIST` | Restrict join access to `WHITELIST` | `false` |
 | `WHITELIST` | Comma-separated usernames allowed to join | (empty) |
 | `OPS` | Comma-separated usernames granted operator | (empty) |
@@ -73,6 +78,15 @@ Once port forwarding works, point a domain at your server instead of sharing a r
 1. Buy a domain from any registrar.
 2. Add a `SRV` record for `_minecraft._tcp` pointing to your host, so players can join with just `play.yourdomain.com` without a port. Alternatively, a plain `A` record works if players don't mind adding `:25565`.
 3. If your public IP isn't static, use a dynamic DNS provider (e.g. DuckDNS, No-IP) and point your domain at the dynamic DNS hostname via a `CNAME`, or run a small updater that refreshes your DNS record when your IP changes.
+
+## Performance
+
+This runs on a home PC and home upload bandwidth rather than a data center, so the defaults are tuned down from vanilla:
+
+- `VIEW_DISTANCE` (`8`) and `SIMULATION_DISTANCE` (`6`) are lower than vanilla's defaults of `10`. Simulation distance in particular drives CPU usage (mob AI, redstone, block ticks), so lowering it first is usually the biggest win if the server lags with several players on.
+- `CONTAINER_MEMORY_LIMIT` (`5G`) caps the container to slightly more than `SERVER_MEMORY` (`4G`). The gap is headroom for the JVM's off-heap usage (metaspace, thread stacks, native buffers) on top of its heap. If you raise `SERVER_MEMORY`, raise `CONTAINER_MEMORY_LIMIT` by at least 1G as well, otherwise the container can get OOM-killed under load.
+
+Note that the "name" a player sees in their multiplayer server list is whatever they typed in when adding your server — that's stored client-side and the server has no control over it. What the server does control is `MOTD` (the description line under that name) and `SERVER_ICON` (the 64x64 icon), both above.
 
 ## Security
 
