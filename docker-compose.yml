@@ -1,3 +1,9 @@
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   minecraft:
     image: itzg/minecraft-server:latest
@@ -35,6 +41,7 @@ services:
       - ./data:/data
     stdin_open: true
     tty: true
+    logging: *default-logging
     healthcheck:
       test: ["CMD", "mc-health"]
       start_period: 1m
@@ -56,6 +63,7 @@ services:
     volumes:
       - ./data:/data:ro
       - ./backups:/backups
+    logging: *default-logging
 
   playit:
     image: ghcr.io/playit-cloud/playit-agent:latest
@@ -66,3 +74,4 @@ services:
       - minecraft
     environment:
       SECRET_KEY: "${PLAYIT_SECRET_KEY:-}"
+    logging: *default-logging
