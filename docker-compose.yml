@@ -26,6 +26,11 @@ services:
       ENABLE_RCON: "true"
       RCON_PASSWORD: "${RCON_PASSWORD}"
       RCON_PORT: "25575"
+      RCON_CMDS_STARTUP: |-
+        gamerule keepInventory ${KEEP_INVENTORY:-false}
+        gamerule mobGriefing ${MOB_GRIEFING:-true}
+        gamerule doFireTick ${FIRE_TICK:-true}
+        gamerule doDaylightCycle ${DAYLIGHT_CYCLE:-true}
     volumes:
       - ./data:/data
     stdin_open: true
