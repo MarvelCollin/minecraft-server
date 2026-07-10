@@ -1,4 +1,5 @@
 # minecraft-server
+![License](https://img.shields.io/github/license/MarvelCollin/minecraft-server) ![Last commit](https://img.shields.io/github/last-commit/MarvelCollin/minecraft-server) ![Docker](https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white)
 
 A self-hosted, Dockerized Minecraft server with automated backups, ready to be exposed to the public internet.
 
