@@ -74,6 +74,28 @@ Once port forwarding works, point a domain at your server instead of sharing a r
 2. Add a `SRV` record for `_minecraft._tcp` pointing to your host, so players can join with just `play.yourdomain.com` without a port. Alternatively, a plain `A` record works if players don't mind adding `:25565`.
 3. If your public IP isn't static, use a dynamic DNS provider (e.g. DuckDNS, No-IP) and point your domain at the dynamic DNS hostname via a `CNAME`, or run a small updater that refreshes your DNS record when your IP changes.
 
+## Security
+
+- `ONLINE_MODE` is pinned to `true` and must stay that way. It forces every player to authenticate with Mojang/Microsoft. Turning it off lets anyone connect under any username, including one in your `OPS` list, handing them full admin.
+- `ENABLE_COMMAND_BLOCK` is pinned to `false`. Command blocks can run arbitrary server commands, so leave them off unless a trusted OP specifically needs them for redstone/minigame builds.
+- Keep `RCON_PASSWORD` out of source control (already covered by `.gitignore`) and use a long random value, since RCON grants full console access to anyone who has it.
+- Only add trusted usernames to `OPS`. An operator can change game rules, teleport, and access command blocks.
+
+## Gameplay Rules
+
+Gamerules (like `keepInventory`) live in the world save, not in `.env`, so they're set once via RCON rather than as an environment variable. Useful ones for a casual public server:
+
+```
+docker exec minecraft-server rcon-cli gamerule keepInventory true
+docker exec minecraft-server rcon-cli gamerule mobGriefing false
+docker exec minecraft-server rcon-cli gamerule doDaylightCycle true
+```
+
+- `keepInventory true` — players keep their items on death instead of dropping them, which cuts down on rage-quits from griefers or PvP deaths on a public server.
+- `mobGriefing false` — stops creepers, endermen, and other mobs from destroying blocks or picking them up.
+
+These persist across restarts once set, so they only need to be run again if you start a fresh world.
+
 ## Backups
 
 The `backup` service automatically archives `./data` into `./backups` on the interval set by `BACKUP_INTERVAL`, pruning anything older than `BACKUP_RETENTION_DAYS`.
