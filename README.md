@@ -133,6 +133,7 @@ Every service also caps its logs at 10MB × 3 files, so a long-running server do
 - `ENABLE_COMMAND_BLOCK` is pinned to `false`. Command blocks can run arbitrary server commands, so leave them off unless a trusted OP specifically needs them for redstone/minigame builds.
 - Keep `RCON_PASSWORD` out of source control (already covered by `.gitignore`) and use a long random value, since RCON grants full console access to anyone who has it.
 - Only add trusted usernames to `OPS`. An operator can change game rules, teleport, and access command blocks.
+- `ENABLE_WHITELIST` is left `false` intentionally — this server is open to anyone who has the join address, not just a specific invite list. If that ever needs to change, set `ENABLE_WHITELIST=true` and list allowed usernames in `WHITELIST` (comma-separated); there's no wildcard value that means "allow all" within the whitelist itself, leaving it disabled is what achieves that.
 
 ## Gameplay Rules
 
