@@ -44,6 +44,10 @@ All settings are controlled through `.env`. See `.env.example` for the full list
 | `CONTAINER_MEMORY_LIMIT` | Hard memory cap for the container | `5G` |
 | `DIFFICULTY` | `peaceful`, `easy`, `normal`, `hard` | `normal` |
 | `GAME_MODE` | `survival`, `creative`, `adventure`, `spectator` | `survival` |
+| `KEEP_INVENTORY` | Players keep their items on death | `false` |
+| `MOB_GRIEFING` | Mobs can break/pick up blocks (creepers, endermen, etc.) | `true` |
+| `FIRE_TICK` | Fire spreads and burns blocks | `true` |
+| `DAYLIGHT_CYCLE` | Time advances instead of staying fixed | `true` |
 | `MOTD` | Description players see in their multiplayer list | `A Minecraft Server` |
 | `SERVER_ICON` | URL or local path to a server icon image | (empty) |
 | `MAX_PLAYERS` | Maximum concurrent players | `20` |
@@ -97,18 +101,23 @@ Note that the "name" a player sees in their multiplayer server list is whatever 
 
 ## Gameplay Rules
 
-Gamerules (like `keepInventory`) live in the world save, not in `.env`, so they're set once via RCON rather than as an environment variable. Useful ones for a casual public server:
+Gamerules live in the world save, not `server.properties`, so this image has no direct env var for them. Instead, `docker-compose.yml` runs them as RCON commands every time the container starts, via [`RCON_CMDS_STARTUP`](https://github.com/itzg/docker-minecraft-server/blob/master/docs/configuration/auto-rcon-commands.md), driven by the `KEEP_INVENTORY`, `MOB_GRIEFING`, `FIRE_TICK`, and `DAYLIGHT_CYCLE` variables in `.env` (see the table above). Defaults match vanilla, so leaving them unset changes nothing.
+
+To change one, edit `.env` and recreate the container:
 
 ```
-docker exec minecraft-server rcon-cli gamerule keepInventory true
-docker exec minecraft-server rcon-cli gamerule mobGriefing false
-docker exec minecraft-server rcon-cli gamerule doDaylightCycle true
+docker compose up -d
 ```
 
-- `keepInventory true` — players keep their items on death instead of dropping them, which cuts down on rage-quits from griefers or PvP deaths on a public server.
-- `mobGriefing false` — stops creepers, endermen, and other mobs from destroying blocks or picking them up.
+This re-applies the current `.env` values on top of your existing world — it does not reset or regenerate anything.
 
-These persist across restarts once set, so they only need to be run again if you start a fresh world.
+For a gamerule not covered by those four variables, set it directly:
+
+```
+docker exec minecraft-server rcon-cli gamerule <name> <value>
+```
+
+Rules set this way persist in the world save, but will be overwritten back to your `.env` value (or vanilla default) the next time the container restarts if that rule is one of the four managed above.
 
 ## Backups
 
