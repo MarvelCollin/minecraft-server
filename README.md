@@ -75,20 +75,30 @@ There are two ways to let people join over the internet. Which one works depends
 
 This project includes an optional `playit` service using the [official playit-agent Docker image](https://github.com/playit-cloud/playit-agent). It makes an outbound-only connection to playit's relay, so it needs no port forwarding and works even behind CGNAT.
 
-1. Go to [playit.gg](https://playit.gg/), sign up, and use their Docker agent setup to generate a secret key.
-2. Put it in `.env`:
+1. Go to [playit.gg](https://playit.gg/) and sign up.
+2. Start their Docker agent setup wizard, give the agent a name, and copy the `SECRET_KEY` it generates.
+3. Put it in `.env`:
 
    ```
    PLAYIT_SECRET_KEY=<your key>
    ```
 
-3. Start it (it won't run as part of the normal `docker compose up -d` since it's an optional profile):
+4. Start it (it won't run as part of the normal `docker compose up -d` since it's an optional profile):
 
    ```
    docker compose --profile playit up -d
    ```
 
-4. In the playit.gg dashboard, the agent should show as connected. Create a new TCP tunnel with local address `minecraft:25565` (the container name resolves automatically inside the compose network). playit.gg gives you a working address like `something.joinmc.link` — share that with players.
+5. Verify your email if playit asks for it. Until you do, the agent connects but tunnels won't actually work — check your inbox for the verification link.
+6. In the playit.gg dashboard, go to **Tunnels → New Tunnel** and fill in:
+   - **Name your tunnel**: anything
+   - **Tunnel Type**: `Minecraft Java`
+   - **Public Endpoint**: leave on `Free Network` (the map underneath is informational, nothing to click)
+   - **Assign to Agent**: select the agent you named in step 2
+   - **Origin Config → Local IP**: `minecraft` — just the service name, no port. There's a separate field for the port; don't put it in both.
+   - **Local Port**: `25565`
+   - **Proxy Protocol**: `None`
+7. Finish the wizard. playit.gg assigns a working address like `something.joinmc.link` — share that with players.
 
 Custom domains aren't available on playit's free tier (Docker agent + one subdomain is free; a custom domain needs Playit Premium). If you want your own domain for free, use Option B instead.
 
