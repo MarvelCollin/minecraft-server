@@ -105,7 +105,7 @@ Custom domains aren't available on playit's free tier (Docker agent + one subdom
 ### Option B: port forwarding + your own domain (needs a real public IP)
 
 1. **Give your PC a static local IP** on your router (DHCP reservation), so port forwarding keeps working after reboots.
-2. **Port forward** `25565/tcp` (and `25565/udp` if your router separates them) on your router to that local IP.
+2. **Port forward** `25565/tcp` on your router to that local IP. Minecraft Java Edition only uses TCP, so UDP forwarding isn't needed.
 3. Share `your-public-ip:25565` with players to test before bothering with a domain.
 
 ## Using a Domain
