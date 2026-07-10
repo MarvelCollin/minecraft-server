@@ -63,25 +63,44 @@ All settings are controlled through `.env`. See `.env.example` for the full list
 | `RCON_PASSWORD` | Password for remote console access | (required) |
 | `BACKUP_INTERVAL` | How often the backup service runs | `6h` |
 | `BACKUP_RETENTION_DAYS` | How long backups are kept | `7` |
+| `PLAYIT_SECRET_KEY` | Auth key for the optional `playit` tunnel service | (empty, required only for the `playit` profile) |
 
 Full list of supported variables: https://docker-minecraft-server.readthedocs.io/en/latest/variables/
 
 ## Exposing the Server Publicly
 
-To let anyone join over the internet, traffic on port `25565/tcp` needs to reach the machine running Docker.
+There are two ways to let people join over the internet. Which one works depends on whether your ISP gives you a real public IP or hides you behind CGNAT (common on residential/mobile plans) — check by comparing your router's WAN IP (its admin page, usually `192.168.0.1` or `192.168.1.1`) to what an external "what is my ip" search shows you. If they match, either option works; if they don't match, only Option A works.
+
+### Option A: playit.gg (easiest, works behind CGNAT, no router changes)
+
+This project includes an optional `playit` service using the [official playit-agent Docker image](https://github.com/playit-cloud/playit-agent). It makes an outbound-only connection to playit's relay, so it needs no port forwarding and works even behind CGNAT.
+
+1. Go to [playit.gg](https://playit.gg/), sign up, and use their Docker agent setup to generate a secret key.
+2. Put it in `.env`:
+
+   ```
+   PLAYIT_SECRET_KEY=<your key>
+   ```
+
+3. Start it (it won't run as part of the normal `docker compose up -d` since it's an optional profile):
+
+   ```
+   docker compose --profile playit up -d
+   ```
+
+4. In the playit.gg dashboard, the agent should show as connected. Create a new TCP tunnel with local address `minecraft:25565` (the container name resolves automatically inside the compose network). playit.gg gives you a working address like `something.joinmc.link` — share that with players.
+
+Custom domains aren't available on playit's free tier (Docker agent + one subdomain is free; a custom domain needs Playit Premium). If you want your own domain for free, use Option B instead.
+
+### Option B: port forwarding + your own domain (needs a real public IP)
 
 1. **Give your PC a static local IP** on your router (DHCP reservation), so port forwarding keeps working after reboots.
-2. **Port forward** `25565/tcp` on your router to that local IP.
-3. **Find your public IP** by searching "what is my ip" and share `your-public-ip:25565` with players to test.
-
-If players still cannot connect, your ISP is likely using **CGNAT** (common on many residential/mobile plans), meaning you don't have a real public IP to forward to. In that case, use a tunnel service instead of port forwarding, such as:
-
-- [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/)
-- [playit.gg](https://playit.gg/)
+2. **Port forward** `25565/tcp` (and `25565/udp` if your router separates them) on your router to that local IP.
+3. Share `your-public-ip:25565` with players to test before bothering with a domain.
 
 ## Using a Domain
 
-Once port forwarding works, point a domain at your server instead of sharing a raw IP:
+Only relevant if you're on Option B above (playit.gg's free tier uses its own `joinmc.link` subdomain instead):
 
 1. Buy a domain from any registrar.
 2. Add a `SRV` record for `_minecraft._tcp` pointing to your host, so players can join with just `play.yourdomain.com` without a port. Alternatively, a plain `A` record works if players don't mind adding `:25565`.
