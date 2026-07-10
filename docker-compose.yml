@@ -24,7 +24,7 @@ services:
       OPS: "${OPS:-}"
       ENABLE_COMMAND_BLOCK: "false"
       ENABLE_RCON: "true"
-      RCON_PASSWORD: "${RCON_PASSWORD}"
+      RCON_PASSWORD: "${RCON_PASSWORD:?Set RCON_PASSWORD in .env before starting. Run scripts/setup.sh to generate one.}"
       RCON_PORT: "25575"
       RCON_CMDS_STARTUP: |-
         gamerule keepInventory ${KEEP_INVENTORY:-false}
@@ -51,7 +51,7 @@ services:
       BACKUP_INTERVAL: "${BACKUP_INTERVAL:-6h}"
       RCON_HOST: minecraft
       RCON_PORT: "25575"
-      RCON_PASSWORD: "${RCON_PASSWORD}"
+      RCON_PASSWORD: "${RCON_PASSWORD:?Set RCON_PASSWORD in .env before starting. Run scripts/setup.sh to generate one.}"
       PRUNE_BACKUPS_DAYS: "${BACKUP_RETENTION_DAYS:-7}"
     volumes:
       - ./data:/data:ro
