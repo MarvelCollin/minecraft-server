@@ -50,7 +50,7 @@ All settings are controlled through `.env`. See `.env.example` for the full list
 | `GAME_MODE` | `survival`, `creative`, `adventure`, `spectator` | `survival` |
 | `KEEP_INVENTORY` | Players keep their items on death | `false` |
 | `MOB_GRIEFING` | Mobs can break/pick up blocks (creepers, endermen, etc.) | `true` |
-| `FIRE_TICK` | Fire spreads and burns blocks | `true` |
+| `FIRE_SPREAD_RADIUS` | Max blocks fire can spread from a player. `-1` unlimited, `0` disables spread entirely | `-1` |
 | `DAYLIGHT_CYCLE` | Time advances instead of staying fixed | `true` |
 | `MOTD` | Description players see in their multiplayer list | `A Minecraft Server` |
 | `SERVER_ICON` | URL or local path to a server icon image | (empty) |
@@ -105,7 +105,9 @@ Note that the "name" a player sees in their multiplayer server list is whatever 
 
 ## Gameplay Rules
 
-Gamerules live in the world save, not `server.properties`, so this image has no direct env var for them. Instead, `docker-compose.yml` runs them as RCON commands every time the container starts, via [`RCON_CMDS_STARTUP`](https://github.com/itzg/docker-minecraft-server/blob/master/docs/configuration/auto-rcon-commands.md), driven by the `KEEP_INVENTORY`, `MOB_GRIEFING`, `FIRE_TICK`, and `DAYLIGHT_CYCLE` variables in `.env` (see the table above). Defaults match vanilla, so leaving them unset changes nothing.
+Gamerules live in the world save, not `server.properties`, so this image has no direct env var for them. Instead, `docker-compose.yml` runs them as RCON commands every time the container starts, via [`RCON_CMDS_STARTUP`](https://github.com/itzg/docker-minecraft-server/blob/master/docs/configuration/auto-rcon-commands.md), driven by the `KEEP_INVENTORY`, `MOB_GRIEFING`, `FIRE_SPREAD_RADIUS`, and `DAYLIGHT_CYCLE` variables in `.env` (see the table above). Defaults match vanilla, so leaving them unset changes nothing.
+
+This server version uses namespaced, snake_case gamerule IDs (e.g. `minecraft:keep_inventory`) rather than the older camelCase names (`keepInventory`) you'll see in a lot of tutorials — the old names are rejected with "Incorrect argument for command". All four commands below were verified against a real running container, not just documentation.
 
 To change one, edit `.env` and recreate the container:
 
@@ -115,7 +117,7 @@ docker compose up -d
 
 This re-applies the current `.env` values on top of your existing world — it does not reset or regenerate anything.
 
-For a gamerule not covered by those four variables, set it directly:
+For a gamerule not covered by those four variables, set it directly (use tab-completion in-game after `/gamerule ` to see the exact current ID, since these have changed before and may change again):
 
 ```
 docker exec minecraft-server rcon-cli gamerule <name> <value>
