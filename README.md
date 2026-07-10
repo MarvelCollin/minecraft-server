@@ -110,7 +110,7 @@ Custom domains aren't available on playit's free tier (Docker agent + one subdom
 
 ## Using a Domain
 
-Only relevant if you're on Option B above (playit.gg's free tier uses its own `joinmc.link` subdomain instead):
+Only relevant if you're on Option B above (playit.gg's free tier uses its own `joinmc.link` subdomain instead). Unlike the rest of this README, these steps are standard DNS practice but haven't been tested end-to-end against a real registrar in this setup — the port-forward and playit.gg paths above were both actually run and externally verified, this one wasn't:
 
 1. Buy a domain from any registrar.
 2. Add a `SRV` record for `_minecraft._tcp` pointing to your host, so players can join with just `play.yourdomain.com` without a port. Alternatively, a plain `A` record works if players don't mind adding `:25565`.
@@ -124,6 +124,8 @@ This runs on a home PC and home upload bandwidth rather than a data center, so t
 - `CONTAINER_MEMORY_LIMIT` (`5G`) caps the container to slightly more than `SERVER_MEMORY` (`4G`). The gap is headroom for the JVM's off-heap usage (metaspace, thread stacks, native buffers) on top of its heap. If you raise `SERVER_MEMORY`, raise `CONTAINER_MEMORY_LIMIT` by at least 1G as well, otherwise the container can get OOM-killed under load.
 
 Note that the "name" a player sees in their multiplayer server list is whatever they typed in when adding your server — that's stored client-side and the server has no control over it. What the server does control is `MOTD` (the description line under that name) and `SERVER_ICON` (the 64x64 icon), both above.
+
+Every service also caps its logs at 10MB × 3 files, so a long-running server doesn't slowly fill your disk with log history. This isn't configurable via `.env` — edit the `x-logging` block at the top of `docker-compose.yml` directly if you want different limits.
 
 ## Security
 
@@ -158,10 +160,10 @@ Rules set this way persist in the world save, but will be overwritten back to yo
 
 The `backup` service automatically archives `./data` into `./backups` on the interval set by `BACKUP_INTERVAL`, pruning anything older than `BACKUP_RETENTION_DAYS`.
 
-To trigger a manual save before an update or shutdown:
+To trigger a manual save before an update or shutdown (`flush` forces it to disk immediately rather than queuing it — the same flag the `backup` service itself uses):
 
 ```
-docker exec minecraft-server rcon-cli save-all
+docker exec minecraft-server rcon-cli save-all flush
 ```
 
 ## Updating
@@ -175,6 +177,12 @@ docker compose up -d
 
 ```
 docker compose down
+```
+
+If you're running the `playit` profile, plain `docker compose down` will **not** stop it — profiles aren't remembered between commands, so it only targets `minecraft` and `backup`, leaving `minecraft-playit` running in the background. To stop everything:
+
+```
+docker compose --profile playit down
 ```
 
 World data in `./data` is preserved across restarts and updates since it lives on the host, not inside the container.
