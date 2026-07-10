@@ -27,10 +27,10 @@ services:
       RCON_PASSWORD: "${RCON_PASSWORD:?Set RCON_PASSWORD in .env before starting. Run scripts/setup.sh to generate one.}"
       RCON_PORT: "25575"
       RCON_CMDS_STARTUP: |-
-        gamerule keepInventory ${KEEP_INVENTORY:-false}
-        gamerule mobGriefing ${MOB_GRIEFING:-true}
-        gamerule doFireTick ${FIRE_TICK:-true}
-        gamerule doDaylightCycle ${DAYLIGHT_CYCLE:-true}
+        gamerule minecraft:keep_inventory ${KEEP_INVENTORY:-false}
+        gamerule minecraft:mob_griefing ${MOB_GRIEFING:-true}
+        gamerule minecraft:fire_spread_radius_around_player ${FIRE_SPREAD_RADIUS:--1}
+        gamerule minecraft:advance_time ${DAYLIGHT_CYCLE:-true}
     volumes:
       - ./data:/data
     stdin_open: true
