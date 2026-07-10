@@ -6,16 +6,17 @@ A self-hosted, Dockerized Minecraft server with automated backups, ready to be e
 
 - Docker
 - Docker Compose
+- Git Bash or WSL (Windows), to run `scripts/setup.sh`
 
 ## Quick Start
 
-1. Copy the environment template and edit it:
+1. Run the setup script. It creates `.env` from the template and generates a random `RCON_PASSWORD` for you:
 
    ```
-   cp .env.example .env
+   bash scripts/setup.sh
    ```
 
-2. Set a strong `RCON_PASSWORD` in `.env`.
+2. (Optional) Open `.env` and adjust `MOTD`, `DIFFICULTY`, `GAME_MODE`, `WHITELIST`, `OPS`, etc. The defaults work as-is.
 
 3. Start the server:
 
@@ -28,6 +29,8 @@ A self-hosted, Dockerized Minecraft server with automated backups, ready to be e
    ```
    docker compose logs -f minecraft
    ```
+
+`docker compose up` refuses to start with a clear error if `.env` is missing or `RCON_PASSWORD` was never set, instead of silently running RCON with a blank password.
 
 The world data is stored in `./data` and backups are stored in `./backups`, both on your host machine.
 
