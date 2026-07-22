@@ -63,7 +63,7 @@ add_entry() {
   fi
 
   if [ ! -f "$ENV_FILE" ]; then
-    echo -e "    ${RED}run ./setup.sh first${RESET}"
+    echo -e "    ${RED}run ./server.sh setup first${RESET}"
     return 1
   fi
   local current
@@ -121,7 +121,7 @@ do_add() {
   if [ $count -gt 0 ]; then
     echo ""
     echo -e "  ${GREEN}${BOLD}$count mod(s) added${RESET}"
-    echo -e "  ${DIM}Restart to apply: docker compose restart minecraft${RESET}"
+    echo -e "  ${DIM}Restart to apply: ./server.sh restart${RESET}"
   fi
 }
 
@@ -250,6 +250,7 @@ if [ $# -gt 0 ]; then
   case "$1" in
     add)
       shift
+      check_server_type
       for entry in "$@"; do
         add_entry "$entry"
       done
@@ -287,7 +288,7 @@ while true; do
     3) do_remove ;;
     4)
       echo ""
-      echo -e "  ${DIM}Restart to apply: docker compose restart minecraft${RESET}"
+      echo -e "  ${DIM}Restart to apply: ./server.sh restart${RESET}"
       echo ""
       exit 0
       ;;

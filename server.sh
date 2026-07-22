@@ -63,10 +63,19 @@ env_get() {
 }
 
 env_set() {
-  if grep -q "^$1=" "$ENV_FILE" 2>/dev/null; then
-    sed -i "s/^$1=.*/$1=$2/" "$ENV_FILE"
+  local key="$1" val="$2"
+  if grep -q "^${key}=" "$ENV_FILE" 2>/dev/null; then
+    local tmpfile="${ENV_FILE}.tmp"
+    while IFS= read -r line || [ -n "$line" ]; do
+      if [[ "$line" == "${key}="* ]]; then
+        echo "${key}=${val}"
+      else
+        echo "$line"
+      fi
+    done < "$ENV_FILE" > "$tmpfile"
+    mv "$tmpfile" "$ENV_FILE"
   else
-    echo "$1=$2" >> "$ENV_FILE"
+    echo "${key}=${val}" >> "$ENV_FILE"
   fi
 }
 
@@ -186,6 +195,19 @@ cmd_start() {
   require_docker
   require_env
   echo ""
+
+  if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^${CONTAINER}$"; then
+    echo -e "  ${YELLOW}Server is already running.${RESET}"
+    echo -ne "  ${BOLD}Restart instead?${RESET} [y/N]: "
+    confirm=""
+    read -r confirm
+    if [[ "${confirm:-N}" =~ ^[Yy]$ ]]; then
+      cmd_restart
+      return
+    fi
+    return
+  fi
+
   echo -e "  ${BOLD}Starting server...${RESET}"
   compose_cmd up -d
   echo ""
@@ -510,6 +532,12 @@ menu() {
   echo -e "  ${CYAN}${BOLD}║      Minecraft Server Manager         ║${RESET}"
   echo -e "  ${CYAN}${BOLD}╚════════════════════════════════════════╝${RESET}"
   echo ""
+
+  if [ ! -f "$ENV_FILE" ]; then
+    echo -e "  ${YELLOW}First time? Running setup...${RESET}"
+    echo ""
+    cmd_setup
+  fi
 
   while true; do
     if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^${CONTAINER}$"; then
