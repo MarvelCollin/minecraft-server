@@ -69,7 +69,7 @@ Full variable reference: https://docker-minecraft-server.readthedocs.io/en/lates
 
 Set `SERVER_TYPE` to `FABRIC` or `FORGE` first (vanilla can't load mods). The mod manager accepts Modrinth slugs (`sodium`), download URLs, or local `.jar` files dropped in `mods/`.
 
-CLI shortcut: `./mods.sh add sodium lithium https://example.com/mod.jar`
+CLI shortcut: `./mc.sh mods add sodium lithium https://example.com/mod.jar`
 
 ## Exposing the Server
 
