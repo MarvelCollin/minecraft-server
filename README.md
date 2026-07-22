@@ -6,41 +6,41 @@ A self-hosted, Dockerized Minecraft server with automated backups, ready to be e
 ## Quick Start
 
 ```
-./server.sh setup    # checks Docker, creates .env, walks you through config
-./server.sh start    # starts the server
-./server.sh logs     # watch until it says "Done"
+./mc.sh setup    # checks Docker, creates .env, walks you through config
+./mc.sh start    # starts the server
+./mc.sh logs     # watch until it says "Done"
 ```
 
-Run `./server.sh` with no arguments for an interactive menu.
+Run `./mc.sh` with no arguments for an interactive menu.
 
 ## Commands
 
 ```
-./server.sh setup        # interactive setup wizard
-./server.sh start        # start server (auto-detects playit.gg)
-./server.sh stop         # graceful save + stop
-./server.sh restart      # restart
-./server.sh status       # uptime, health, players, version
-./server.sh logs         # follow server logs
-./server.sh console      # RCON console
-./server.sh mods         # mod manager
-./server.sh backup       # trigger manual backup
-./server.sh backup list  # list backups
-./server.sh backup restore <file>
-./server.sh update       # pull latest images + restart
-./server.sh players      # list online players
-./server.sh say <msg>    # broadcast message
-./server.sh kick <name>  # kick player
-./server.sh ban <name>   # ban player
-./server.sh unban <name> # unban player
-./server.sh op <name>    # grant operator
-./server.sh deop <name>  # revoke operator
-./server.sh whitelist add|remove|list|on|off
+./mc.sh setup        # interactive setup wizard
+./mc.sh start        # start server (auto-detects playit.gg)
+./mc.sh stop         # graceful save + stop
+./mc.sh restart      # restart
+./mc.sh status       # uptime, health, players, version
+./mc.sh logs         # follow server logs
+./mc.sh console      # RCON console
+./mc.sh mods         # mod manager
+./mc.sh backup       # trigger manual backup
+./mc.sh backup list  # list backups
+./mc.sh backup restore <file>
+./mc.sh update       # pull latest images + restart
+./mc.sh players      # list online players
+./mc.sh say <msg>    # broadcast message
+./mc.sh kick <name>  # kick player
+./mc.sh ban <name>   # ban player
+./mc.sh unban <name> # unban player
+./mc.sh op <name>    # grant operator
+./mc.sh deop <name>  # revoke operator
+./mc.sh whitelist add|remove|list|on|off
 ```
 
 ## Configuration
 
-All settings live in `.env` (created by `./server.sh setup`). Common ones:
+All settings live in `.env` (created by `./mc.sh setup`). Common ones:
 
 | Variable | Default | Description |
 |---|---|---|
@@ -57,14 +57,14 @@ All settings live in `.env` (created by `./server.sh setup`). Common ones:
 | `BACKUP_INTERVAL` | `6h` | Auto-backup frequency |
 | `PLAYIT_SECRET_KEY` | (empty) | playit.gg tunnel key (see below) |
 
-After editing `.env`, run `./server.sh restart` to apply.
+After editing `.env`, run `./mc.sh restart` to apply.
 
 Full variable reference: https://docker-minecraft-server.readthedocs.io/en/latest/variables/
 
 ## Mods
 
 ```
-./server.sh mods
+./mc.sh mods
 ```
 
 Set `SERVER_TYPE` to `FABRIC` or `FORGE` first (vanilla can't load mods). The mod manager accepts Modrinth slugs (`sodium`), download URLs, or local `.jar` files dropped in `mods/`.
@@ -80,7 +80,7 @@ CLI shortcut: `./mods.sh add sodium lithium https://example.com/mod.jar`
    ```
    PLAYIT_SECRET_KEY=<your key>
    ```
-3. `./server.sh start` — it auto-detects the key and starts the tunnel.
+3. `./mc.sh start` — it auto-detects the key and starts the tunnel.
 4. In the playit dashboard, create a **Minecraft Java** tunnel with Local IP `minecraft` and port `25565`.
 5. Share the assigned `something.joinmc.link` address with players.
 

@@ -40,14 +40,14 @@ require_docker() {
 
 require_env() {
   if [ ! -f "$ENV_FILE" ]; then
-    echo -e "  ${RED}.env not found. Run: ./server.sh setup${RESET}"
+    echo -e "  ${RED}.env not found. Run: ./mc.sh setup${RESET}"
     exit 1
   fi
 }
 
 require_running() {
   if ! docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^${CONTAINER}$"; then
-    echo -e "  ${RED}Server not running. Run: ./server.sh start${RESET}"
+    echo -e "  ${RED}Server not running. Run: ./mc.sh start${RESET}"
     exit 1
   fi
 }
@@ -226,7 +226,7 @@ cmd_start() {
   if has_playit; then
     echo -e "  ${DIM}playit.gg tunnel enabled${RESET}"
   fi
-  echo -e "  ${DIM}Watch logs: ./server.sh logs${RESET}"
+  echo -e "  ${DIM}Watch logs: ./mc.sh logs${RESET}"
   echo ""
 }
 
@@ -394,7 +394,7 @@ cmd_backup_restore() {
   local target="${1:-}"
 
   if [ -z "$target" ]; then
-    echo -e "  ${RED}Specify a backup file. Run: ./server.sh backup list${RESET}"
+    echo -e "  ${RED}Specify a backup file. Run: ./mc.sh backup list${RESET}"
     return
   fi
 
@@ -405,7 +405,7 @@ cmd_backup_restore() {
     backup_path="$target"
   else
     echo -e "  ${RED}Backup not found: $target${RESET}"
-    echo -e "  ${DIM}Run: ./server.sh backup list${RESET}"
+    echo -e "  ${DIM}Run: ./mc.sh backup list${RESET}"
     return
   fi
 
@@ -747,7 +747,7 @@ case "${1:-}" in
   whitelist) cmd_whitelist "${2:-list}" "${3:-}" ;;
   help|-h|--help)
     echo ""
-    echo -e "  ${BOLD}Usage:${RESET} ./server.sh [command]"
+    echo -e "  ${BOLD}Usage:${RESET} ./mc.sh [command]"
     echo ""
     echo -e "  ${BOLD}Commands:${RESET}"
     echo "    setup              Setup or reconfigure server"
@@ -781,7 +781,7 @@ case "${1:-}" in
   "")        menu ;;
   *)
     echo -e "  ${RED}Unknown command: $1${RESET}"
-    echo -e "  ${DIM}Run: ./server.sh help${RESET}"
+    echo -e "  ${DIM}Run: ./mc.sh help${RESET}"
     exit 1
     ;;
 esac

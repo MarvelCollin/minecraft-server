@@ -35,7 +35,7 @@ services:
       MODRINTH_DOWNLOAD_DEPENDENCIES: "${MODRINTH_DOWNLOAD_DEPENDENCIES:-required}"
       ENABLE_COMMAND_BLOCK: "false"
       ENABLE_RCON: "true"
-      RCON_PASSWORD: "${RCON_PASSWORD:?Set RCON_PASSWORD in .env before starting. Run ./setup.sh to generate one.}"
+      RCON_PASSWORD: "${RCON_PASSWORD:?Set RCON_PASSWORD in .env before starting. Run ./mc.sh setup to generate one.}"
       RCON_PORT: "25575"
       RCON_CMDS_STARTUP: |-
         gamerule minecraft:keep_inventory ${KEEP_INVENTORY:-false}
@@ -64,7 +64,7 @@ services:
       BACKUP_INTERVAL: "${BACKUP_INTERVAL:-6h}"
       RCON_HOST: minecraft
       RCON_PORT: "25575"
-      RCON_PASSWORD: "${RCON_PASSWORD:?Set RCON_PASSWORD in .env before starting. Run ./setup.sh to generate one.}"
+      RCON_PASSWORD: "${RCON_PASSWORD:?Set RCON_PASSWORD in .env before starting. Run ./mc.sh setup to generate one.}"
       PRUNE_BACKUPS_DAYS: "${BACKUP_RETENTION_DAYS:-7}"
     volumes:
       - ./data:/data:ro

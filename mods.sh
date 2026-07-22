@@ -72,7 +72,7 @@ add_entry() {
   fi
 
   if [ ! -f "$ENV_FILE" ]; then
-    echo -e "    ${RED}run ./server.sh setup first${RESET}"
+    echo -e "    ${RED}run ./mc.sh setup first${RESET}"
     return 1
   fi
   local current
@@ -130,7 +130,7 @@ do_add() {
   if [ $count -gt 0 ]; then
     echo ""
     echo -e "  ${GREEN}${BOLD}$count mod(s) added${RESET}"
-    echo -e "  ${DIM}Restart to apply: ./server.sh restart${RESET}"
+    echo -e "  ${DIM}Restart to apply: ./mc.sh restart${RESET}"
   fi
 }
 
@@ -297,7 +297,7 @@ while true; do
     3) do_remove ;;
     4)
       echo ""
-      echo -e "  ${DIM}Restart to apply: ./server.sh restart${RESET}"
+      echo -e "  ${DIM}Restart to apply: ./mc.sh restart${RESET}"
       echo ""
       exit 0
       ;;
