@@ -3,233 +3,102 @@
 
 A self-hosted, Dockerized Minecraft server with automated backups, ready to be exposed to the public internet.
 
-## Requirements
-
-- Docker
-- Docker Compose
-- Git Bash or WSL (Windows), to run `./setup.sh`
-
 ## Quick Start
 
-1. Run the setup wizard. It checks prerequisites, creates `.env`, generates a random `RCON_PASSWORD`, and walks you through server configuration:
+```
+./server.sh setup    # checks Docker, creates .env, walks you through config
+./server.sh start    # starts the server
+./server.sh logs     # watch until it says "Done"
+```
 
-   ```
-   ./server.sh setup
-   ```
+Run `./server.sh` with no arguments for an interactive menu.
 
-2. Start the server:
-
-   ```
-   ./server.sh start
-   ```
-
-3. Check the logs until the server reports "Done":
-
-   ```
-   ./server.sh logs
-   ```
-
-Run `./server.sh` with no arguments for an interactive menu, or `./server.sh help` for all available commands.
-
-`docker compose up` refuses to start with a clear error if `.env` is missing or `RCON_PASSWORD` was never set, instead of silently running RCON with a blank password.
-
-The world data is stored in `./data` and backups are stored in `./backups`, both on your host machine.
-
-## Configuration
-
-All settings are controlled through `.env`. See `.env.example` for the full list. Common ones:
-
-| Variable | Description | Default |
-|---|---|---|
-| `SERVER_PORT` | Host port mapped to the server | `25565` |
-| `SERVER_TYPE` | Server software (`VANILLA`, `PAPER`, `FABRIC`, `FORGE`, ...) | `VANILLA` |
-| `SERVER_VERSION` | Minecraft version | `LATEST` |
-| `SERVER_MEMORY` | Memory allocated to the JVM heap | `4G` |
-| `CONTAINER_MEMORY_LIMIT` | Hard memory cap for the container | `5G` |
-| `DIFFICULTY` | `peaceful`, `easy`, `normal`, `hard` | `normal` |
-| `GAME_MODE` | `survival`, `creative`, `adventure`, `spectator` | `survival` |
-| `KEEP_INVENTORY` | Players keep their items on death | `false` |
-| `MOB_GRIEFING` | Mobs can break/pick up blocks (creepers, endermen, etc.) | `true` |
-| `FIRE_SPREAD_RADIUS` | Max blocks fire can spread from a player. `-1` unlimited, `0` disables spread entirely | `-1` |
-| `DAYLIGHT_CYCLE` | Time advances instead of staying fixed | `true` |
-| `MOTD` | Description players see in their multiplayer list | `A Minecraft Server` |
-| `SERVER_ICON` | URL or local path to a server icon image | (empty) |
-| `MAX_PLAYERS` | Maximum concurrent players | `20` |
-| `VIEW_DISTANCE` | Chunk render distance, in chunks | `8` |
-| `SIMULATION_DISTANCE` | Chunk simulation (tick/mob AI) distance, in chunks | `6` |
-| `ENABLE_WHITELIST` | Restrict join access to `WHITELIST` | `false` |
-| `WHITELIST` | Comma-separated usernames allowed to join | (empty) |
-| `OPS` | Comma-separated usernames granted operator | (empty) |
-| `MODS` | Comma-separated mod download URLs (alternative to `mods.txt`) | (empty) |
-| `REMOVE_OLD_MODS` | Remove previously downloaded mods before re-downloading on startup | `false` |
-| `MODRINTH_PROJECTS` | Comma-separated Modrinth slugs (e.g. `sodium,lithium`) | (empty) |
-| `MODRINTH_DOWNLOAD_DEPENDENCIES` | Auto-download mod dependencies: `required`, `optional`, `none` | `required` |
-| `RCON_PASSWORD` | Password for remote console access | (required) |
-| `BACKUP_INTERVAL` | How often the backup service runs | `6h` |
-| `BACKUP_RETENTION_DAYS` | How long backups are kept | `7` |
-| `PLAYIT_SECRET_KEY` | Auth key for the optional `playit` tunnel service | (empty, required only for the `playit` profile) |
-
-Full list of supported variables: https://docker-minecraft-server.readthedocs.io/en/latest/variables/
-
-## Server Management
-
-Everything goes through `server.sh`:
+## Commands
 
 ```
-./server.sh setup        # Prerequisites check + interactive config
-./server.sh start        # Start server (auto-detects playit.gg)
-./server.sh stop         # Graceful save + stop
-./server.sh restart      # Restart
-./server.sh status       # Online/offline, uptime, health, players
-./server.sh logs         # Follow server logs
+./server.sh setup        # interactive setup wizard
+./server.sh start        # start server (auto-detects playit.gg)
+./server.sh stop         # graceful save + stop
+./server.sh restart      # restart
+./server.sh status       # uptime, health, players, version
+./server.sh logs         # follow server logs
 ./server.sh console      # RCON console
-./server.sh mods         # Mod manager
-./server.sh backup       # Trigger manual backup
-./server.sh backup list  # List backups with sizes and dates
-./server.sh backup restore <file>  # Restore from backup
-./server.sh update       # Pull latest images + restart
-./server.sh players      # List online players
-./server.sh op <name>    # Make player an operator
-./server.sh deop <name>  # Remove operator
+./server.sh mods         # mod manager
+./server.sh backup       # trigger manual backup
+./server.sh backup list  # list backups
+./server.sh backup restore <file>
+./server.sh update       # pull latest images + restart
+./server.sh players      # list online players
+./server.sh op <name>    # grant operator
+./server.sh deop <name>  # revoke operator
 ./server.sh whitelist add|remove|list|on|off
 ```
 
-Or run `./server.sh` with no arguments for an interactive menu.
+## Configuration
+
+All settings live in `.env` (created by `./server.sh setup`). Common ones:
+
+| Variable | Default | Description |
+|---|---|---|
+| `SERVER_TYPE` | `VANILLA` | `VANILLA`, `PAPER`, `FABRIC`, `FORGE`, ... |
+| `SERVER_VERSION` | `LATEST` | Minecraft version |
+| `SERVER_MEMORY` | `4G` | JVM heap size |
+| `DIFFICULTY` | `normal` | `peaceful`, `easy`, `normal`, `hard` |
+| `GAME_MODE` | `survival` | `survival`, `creative`, `adventure`, `spectator` |
+| `MAX_PLAYERS` | `20` | Max concurrent players |
+| `MOTD` | `A Minecraft Server` | Description in multiplayer list |
+| `KEEP_INVENTORY` | `false` | Keep items on death |
+| `OPS` | (empty) | Comma-separated operator usernames |
+| `ENABLE_WHITELIST` | `false` | Restrict access to whitelist |
+| `BACKUP_INTERVAL` | `6h` | Auto-backup frequency |
+| `PLAYIT_SECRET_KEY` | (empty) | playit.gg tunnel key (see below) |
+
+After editing `.env`, run `./server.sh restart` to apply.
+
+Full variable reference: https://docker-minecraft-server.readthedocs.io/en/latest/variables/
 
 ## Mods
 
-1. Set `SERVER_TYPE` in `.env` to `FABRIC` or `FORGE` (vanilla doesn't support mods).
+```
+./server.sh mods
+```
 
-2. Run the mod manager:
-
-   ```
-   ./mods.sh
-   ```
-
-3. Restart the server:
-
-   ```
-   docker compose restart minecraft
-   ```
-
-The manager auto-detects what you type — paste a URL from any source (CurseForge, Modrinth, GitHub) and it downloads on startup, or type a Modrinth slug like `sodium` and it resolves the right version automatically. You can also drop `.jar` files into `mods/` and the manager picks them up.
+Set `SERVER_TYPE` to `FABRIC` or `FORGE` first (vanilla can't load mods). The mod manager accepts Modrinth slugs (`sodium`), download URLs, or local `.jar` files dropped in `mods/`.
 
 CLI shortcut: `./mods.sh add sodium lithium https://example.com/mod.jar`
 
-## Exposing the Server Publicly
+## Exposing the Server
 
-There are two ways to let people join over the internet. Which one works depends on whether your ISP gives you a real public IP or hides you behind CGNAT (common on residential/mobile plans) — check by comparing your router's WAN IP (its admin page, usually `192.168.0.1` or `192.168.1.1`) to what an external "what is my ip" search shows you. If they match, either option works; if they don't match, only Option A works.
+### Option A: playit.gg (easiest, works behind CGNAT)
 
-### Option A: playit.gg (easiest, works behind CGNAT, no router changes)
-
-This project includes an optional `playit` service using the [official playit-agent Docker image](https://github.com/playit-cloud/playit-agent). It makes an outbound-only connection to playit's relay, so it needs no port forwarding and works even behind CGNAT.
-
-1. Go to [playit.gg](https://playit.gg/) and sign up.
-2. Start their Docker agent setup wizard, give the agent a name, and copy the `SECRET_KEY` it generates.
-3. Put it in `.env`:
-
+1. Sign up at [playit.gg](https://playit.gg/) and create a Docker agent.
+2. Copy the `SECRET_KEY` into `.env`:
    ```
    PLAYIT_SECRET_KEY=<your key>
    ```
+3. `./server.sh start` — it auto-detects the key and starts the tunnel.
+4. In the playit dashboard, create a **Minecraft Java** tunnel with Local IP `minecraft` and port `25565`.
+5. Share the assigned `something.joinmc.link` address with players.
 
-4. Start it (it won't run as part of the normal `docker compose up -d` since it's an optional profile):
+### Option B: port forwarding (needs a real public IP)
 
-   ```
-   docker compose --profile playit up -d
-   ```
+1. Set a static local IP on your router (DHCP reservation).
+2. Port forward `25565/tcp` to that IP.
+3. Share `your-public-ip:25565` with players.
 
-5. Verify your email if playit asks for it. Until you do, the agent connects but tunnels won't actually work — check your inbox for the verification link.
-6. In the playit.gg dashboard, go to **Tunnels → New Tunnel** and fill in:
-   - **Name your tunnel**: anything
-   - **Tunnel Type**: `Minecraft Java`
-   - **Public Endpoint**: leave on `Free Network` (the map underneath is informational, nothing to click)
-   - **Assign to Agent**: select the agent you named in step 2
-   - **Origin Config → Local IP**: `minecraft` — just the service name, no port. There's a separate field for the port; don't put it in both.
-   - **Local Port**: `25565`
-   - **Proxy Protocol**: `None`
-7. Finish the wizard. playit.gg assigns a working address like `something.joinmc.link` — share that with players.
-
-Custom domains aren't available on playit's free tier (Docker agent + one subdomain is free; a custom domain needs Playit Premium). If you want your own domain for free, use Option B instead.
-
-### Option B: port forwarding + your own domain (needs a real public IP)
-
-1. **Give your PC a static local IP** on your router (DHCP reservation), so port forwarding keeps working after reboots.
-2. **Port forward** `25565/tcp` on your router to that local IP. Minecraft Java Edition only uses TCP, so UDP forwarding isn't needed.
-3. Share `your-public-ip:25565` with players to test before bothering with a domain.
-
-## Using a Domain
-
-Only relevant if you're on Option B above (playit.gg's free tier uses its own `joinmc.link` subdomain instead). Unlike the rest of this README, these steps are standard DNS practice but haven't been tested end-to-end against a real registrar in this setup — the port-forward and playit.gg paths above were both actually run and externally verified, this one wasn't:
-
-1. Buy a domain from any registrar.
-2. Add a `SRV` record for `_minecraft._tcp` pointing to your host, so players can join with just `play.yourdomain.com` without a port. Alternatively, a plain `A` record works if players don't mind adding `:25565`.
-3. If your public IP isn't static, use a dynamic DNS provider (e.g. DuckDNS, No-IP) and point your domain at the dynamic DNS hostname via a `CNAME`, or run a small updater that refreshes your DNS record when your IP changes.
-
-## Performance
-
-This runs on a home PC and home upload bandwidth rather than a data center, so the defaults are tuned down from vanilla:
-
-- `VIEW_DISTANCE` (`8`) and `SIMULATION_DISTANCE` (`6`) are lower than vanilla's defaults of `10`. Simulation distance in particular drives CPU usage (mob AI, redstone, block ticks), so lowering it first is usually the biggest win if the server lags with several players on.
-- `CONTAINER_MEMORY_LIMIT` (`5G`) caps the container to slightly more than `SERVER_MEMORY` (`4G`). The gap is headroom for the JVM's off-heap usage (metaspace, thread stacks, native buffers) on top of its heap. If you raise `SERVER_MEMORY`, raise `CONTAINER_MEMORY_LIMIT` by at least 1G as well, otherwise the container can get OOM-killed under load.
-
-Note that the "name" a player sees in their multiplayer server list is whatever they typed in when adding your server — that's stored client-side and the server has no control over it. What the server does control is `MOTD` (the description line under that name) and `SERVER_ICON` (the 64x64 icon), both above.
-
-Every service also caps its logs at 10MB × 3 files, so a long-running server doesn't slowly fill your disk with log history. This isn't configurable via `.env` — edit the `x-logging` block at the top of `docker-compose.yml` directly if you want different limits.
+Optional: add a `SRV` record for `_minecraft._tcp` on your domain so players can join without the port number.
 
 ## Security
 
-- `ONLINE_MODE` is pinned to `true` and must stay that way. It forces every player to authenticate with Mojang/Microsoft. Turning it off lets anyone connect under any username, including one in your `OPS` list, handing them full admin.
-- `ENABLE_COMMAND_BLOCK` is pinned to `false`. Command blocks can run arbitrary server commands, so leave them off unless a trusted OP specifically needs them for redstone/minigame builds.
-- Keep `RCON_PASSWORD` out of source control (already covered by `.gitignore`) and use a long random value, since RCON grants full console access to anyone who has it.
-- Only add trusted usernames to `OPS`. An operator can change game rules, teleport, and access command blocks.
-- `ENABLE_WHITELIST` is left `false` intentionally — this server is open to anyone who has the join address, not just a specific invite list. If that ever needs to change, set `ENABLE_WHITELIST=true` and list allowed usernames in `WHITELIST` (comma-separated); there's no wildcard value that means "allow all" within the whitelist itself, leaving it disabled is what achieves that.
+- `ONLINE_MODE` is pinned to `true` — every player must authenticate with Mojang/Microsoft.
+- `ENABLE_COMMAND_BLOCK` is pinned to `false`.
+- `RCON_PASSWORD` is auto-generated and excluded from git. Don't commit it.
+- Only add trusted usernames to `OPS`.
 
-## Gameplay Rules
+## Performance
 
-Gamerules live in the world save, not `server.properties`, so this image has no direct env var for them. Instead, `docker-compose.yml` runs them as RCON commands every time the container starts, via [`RCON_CMDS_STARTUP`](https://github.com/itzg/docker-minecraft-server/blob/master/docs/configuration/auto-rcon-commands.md), driven by the `KEEP_INVENTORY`, `MOB_GRIEFING`, `FIRE_SPREAD_RADIUS`, and `DAYLIGHT_CYCLE` variables in `.env` (see the table above). Defaults match vanilla, so leaving them unset changes nothing.
+Defaults are tuned for home hosting:
 
-This server version uses namespaced, snake_case gamerule IDs (e.g. `minecraft:keep_inventory`) rather than the older camelCase names (`keepInventory`) you'll see in a lot of tutorials — the old names are rejected with "Incorrect argument for command". All four commands below were verified against a real running container, not just documentation.
-
-To change one, edit `.env` and recreate the container:
-
-```
-docker compose up -d
-```
-
-This re-applies the current `.env` values on top of your existing world — it does not reset or regenerate anything.
-
-For a gamerule not covered by those four variables, set it directly (use tab-completion in-game after `/gamerule ` to see the exact current ID, since these have changed before and may change again):
-
-```
-docker exec minecraft-server rcon-cli gamerule <name> <value>
-```
-
-Rules set this way persist in the world save, but will be overwritten back to your `.env` value (or vanilla default) the next time the container restarts if that rule is one of the four managed above.
-
-## Backups
-
-The `backup` service automatically archives `./data` into `./backups` on the interval set by `BACKUP_INTERVAL`, pruning anything older than `BACKUP_RETENTION_DAYS`.
-
-To trigger a manual save before an update or shutdown (`flush` forces it to disk immediately rather than queuing it — the same flag the `backup` service itself uses):
-
-```
-docker exec minecraft-server rcon-cli save-all flush
-```
-
-## Updating
-
-```
-./server.sh update
-```
-
-This pulls the latest images and restarts. Equivalent to `docker compose pull && docker compose up -d`.
-
-## Stopping
-
-```
-./server.sh stop
-```
-
-`server.sh` auto-detects whether playit.gg is configured and includes it in stop/start commands, so you don't need to remember `--profile playit`.
-
-World data in `./data` is preserved across restarts and updates since it lives on the host, not inside the container.
+- `VIEW_DISTANCE=8` and `SIMULATION_DISTANCE=6` (vanilla defaults are `10`). Lower simulation distance first if lagging.
+- `CONTAINER_MEMORY_LIMIT=5G` gives 1G headroom above `SERVER_MEMORY=4G` for JVM overhead. If you raise one, raise both.
+- Logs capped at 10MB × 3 files per service.
