@@ -28,6 +28,11 @@ services:
       ENABLE_WHITELIST: "${ENABLE_WHITELIST:-false}"
       WHITELIST: "${WHITELIST:-}"
       OPS: "${OPS:-}"
+      MODS: "${MODS:-}"
+      MODS_FILE: "/extras/mods.txt"
+      REMOVE_OLD_MODS: "${REMOVE_OLD_MODS:-false}"
+      MODRINTH_PROJECTS: "${MODRINTH_PROJECTS:-}"
+      MODRINTH_DOWNLOAD_DEPENDENCIES: "${MODRINTH_DOWNLOAD_DEPENDENCIES:-required}"
       ENABLE_COMMAND_BLOCK: "false"
       ENABLE_RCON: "true"
       RCON_PASSWORD: "${RCON_PASSWORD:?Set RCON_PASSWORD in .env before starting. Run scripts/setup.sh to generate one.}"
@@ -39,6 +44,7 @@ services:
         gamerule minecraft:advance_time ${DAYLIGHT_CYCLE:-true}
     volumes:
       - ./data:/data
+      - ./mods.txt:/extras/mods.txt:ro
     stdin_open: true
     tty: true
     logging: *default-logging
