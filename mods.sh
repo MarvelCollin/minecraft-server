@@ -19,6 +19,23 @@ RESET='\033[0m'
 touch "$MODS_FILE"
 mkdir -p "$MODS_DIR"
 
+check_server_type() {
+  if [ -f "$ENV_FILE" ]; then
+    local stype
+    stype=$(sed -n 's/^SERVER_TYPE=//p' "$ENV_FILE")
+    if [ "${stype:-VANILLA}" = "VANILLA" ]; then
+      echo -e "  ${YELLOW}${BOLD}Warning:${RESET} SERVER_TYPE is VANILLA. Mods require FABRIC, FORGE, or similar."
+      echo -ne "  ${BOLD}Continue anyway?${RESET} [y/N]: "
+      local confirm=""
+      read -r confirm
+      if [[ ! "${confirm:-N}" =~ ^[Yy]$ ]]; then
+        echo -e "  ${DIM}Set SERVER_TYPE in .env first, then try again.${RESET}"
+        exit 0
+      fi
+    fi
+  fi
+}
+
 get_modrinth_projects() {
   if [ -f "$ENV_FILE" ]; then
     sed -n 's/^MODRINTH_PROJECTS=//p' "$ENV_FILE"
@@ -65,6 +82,7 @@ add_entry() {
 }
 
 do_add() {
+  check_server_type
   echo ""
 
   shopt -s nullglob
@@ -172,6 +190,17 @@ do_remove() {
     done
   fi
 
+  if [ -d "$DATA_MODS_DIR" ]; then
+    shopt -s nullglob
+    local_jars=("$DATA_MODS_DIR"/*.jar)
+    shopt -u nullglob
+    for jar in "${local_jars[@]}"; do
+      items+=("$(basename "$jar") ${DIM}(local)${RESET}")
+      sources+=("local")
+      values+=("$jar")
+    done
+  fi
+
   if [ ${#items[@]} -eq 0 ]; then
     echo -e "  ${DIM}No mods to remove.${RESET}"
     return
@@ -211,6 +240,9 @@ do_remove() {
     new_value=$(echo ",$current," | sed "s/,$val,/,/" | sed 's/^,//' | sed 's/,$//')
     set_modrinth_projects "$new_value"
     echo -e "  ${GREEN}✓ Removed ${BOLD}$val${RESET}"
+  elif [ "$src" = "local" ]; then
+    rm -f "$val"
+    echo -e "  ${GREEN}✓ Removed $(basename "$val")${RESET}"
   fi
 }
 
@@ -225,8 +257,11 @@ if [ $# -gt 0 ]; then
     list)
       do_list
       ;;
+    remove)
+      do_remove
+      ;;
     *)
-      echo "Usage: ./mods.sh [add|list] [urls or slugs...]"
+      echo "Usage: ./mods.sh [add|list|remove] [urls or slugs...]"
       ;;
   esac
   exit 0
