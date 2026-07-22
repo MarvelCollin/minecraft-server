@@ -29,6 +29,10 @@ Run `./server.sh` with no arguments for an interactive menu.
 ./server.sh backup restore <file>
 ./server.sh update       # pull latest images + restart
 ./server.sh players      # list online players
+./server.sh say <msg>    # broadcast message
+./server.sh kick <name>  # kick player
+./server.sh ban <name>   # ban player
+./server.sh unban <name> # unban player
 ./server.sh op <name>    # grant operator
 ./server.sh deop <name>  # revoke operator
 ./server.sh whitelist add|remove|list|on|off

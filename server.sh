@@ -130,6 +130,12 @@ cmd_setup() {
     *) env_set SERVER_TYPE "$choice" ;;
   esac
 
+  current=$(env_get SERVER_VERSION)
+  echo -ne "  ${BOLD}Minecraft version${RESET} ${DIM}[${current:-LATEST}]${RESET}: "
+  val=""
+  read -r val
+  [ -n "${val:-}" ] && env_set SERVER_VERSION "$val"
+
   current=$(env_get GAME_MODE)
   echo -e "  ${BOLD}Game mode${RESET} ${DIM}[${current:-survival}]${RESET}"
   echo -e "    1) survival  2) creative  3) adventure  4) spectator"
@@ -187,8 +193,13 @@ cmd_setup() {
 
   echo ""
   echo -e "  ${GREEN}${BOLD}Setup complete!${RESET}"
-  echo -e "  ${DIM}Start server: ./server.sh start${RESET}"
   echo ""
+  echo -ne "  ${BOLD}Start server now?${RESET} [Y/n]: "
+  val=""
+  read -r val
+  if [[ "${val:-Y}" =~ ^[Yy]?$ ]]; then
+    cmd_start
+  fi
 }
 
 cmd_start() {
@@ -222,13 +233,16 @@ cmd_start() {
 cmd_stop() {
   require_docker
   echo ""
-  echo -e "  ${BOLD}Stopping server...${RESET}"
 
-  if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^${CONTAINER}$"; then
-    rcon save-all flush 2>/dev/null || true
-    sleep 1
+  if ! docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^${CONTAINER}$"; then
+    echo -e "  ${DIM}Server is already stopped.${RESET}"
+    echo ""
+    return
   fi
 
+  echo -e "  ${BOLD}Stopping server...${RESET}"
+  rcon save-all flush 2>/dev/null || true
+  sleep 1
   compose_cmd down
   echo -e "  ${GREEN}✓ Server stopped${RESET}"
   echo ""
@@ -365,10 +379,13 @@ cmd_backup_list() {
     echo ""
     return
   fi
+  BACKUP_FILES=()
   for f in backups/*; do
+    BACKUP_FILES+=("$f")
+    local idx=${#BACKUP_FILES[@]}
     size=$(du -h "$f" 2>/dev/null | cut -f1)
     mod_date=$(date -r "$f" "+%Y-%m-%d %H:%M" 2>/dev/null || stat --format="%y" "$f" 2>/dev/null | cut -d. -f1)
-    echo -e "  ${GREEN}•${RESET} $(basename "$f")  ${DIM}${size}  ${mod_date}${RESET}"
+    echo -e "  ${BOLD}${idx})${RESET} $(basename "$f")  ${DIM}${size}  ${mod_date}${RESET}"
   done
   echo ""
 }
@@ -485,6 +502,59 @@ cmd_op() {
   esac
 }
 
+cmd_say() {
+  local msg="${*}"
+  if [ -z "$msg" ]; then
+    echo -ne "  ${BOLD}Message:${RESET} "
+    read -r msg
+    [ -z "${msg:-}" ] && return
+  fi
+  require_docker
+  require_running
+  rcon say "$msg"
+  echo -e "  ${GREEN}✓ Broadcast sent${RESET}"
+}
+
+cmd_kick() {
+  local name="${1:-}"
+  if [ -z "$name" ]; then
+    echo -ne "  ${BOLD}Username:${RESET} "
+    read -r name
+    [ -z "${name:-}" ] && return
+  fi
+  local reason="${2:-Kicked by server admin}"
+  require_docker
+  require_running
+  rcon kick "$name" "$reason"
+  echo -e "  ${GREEN}✓ $name kicked${RESET}"
+}
+
+cmd_ban() {
+  local action="${1:-add}"
+  local name="${2:-}"
+  if [ -z "$name" ]; then
+    echo -ne "  ${BOLD}Username:${RESET} "
+    read -r name
+    [ -z "${name:-}" ] && return
+  fi
+  require_docker
+  require_running
+  case "$action" in
+    add)
+      rcon ban "$name"
+      echo -e "  ${GREEN}✓ $name banned${RESET}"
+      ;;
+    remove)
+      rcon pardon "$name"
+      echo -e "  ${GREEN}✓ $name unbanned${RESET}"
+      ;;
+    list)
+      result=$(rcon banlist 2>/dev/null)
+      echo -e "  ${BOLD}${result:-No bans}${RESET}"
+      ;;
+  esac
+}
+
 cmd_whitelist() {
   local action="${1:-list}"
   local name="${2:-}"
@@ -541,7 +611,12 @@ menu() {
 
   while true; do
     if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^${CONTAINER}$"; then
-      echo -e "  ${GREEN}●${RESET} Server ${GREEN}online${RESET}"
+      player_info=$(rcon list 2>/dev/null | head -1)
+      if [ -n "${player_info:-}" ]; then
+        echo -e "  ${GREEN}●${RESET} Server ${GREEN}online${RESET}  ${DIM}— ${player_info}${RESET}"
+      else
+        echo -e "  ${GREEN}●${RESET} Server ${GREEN}online${RESET}"
+      fi
     else
       echo -e "  ${RED}●${RESET} Server ${RED}offline${RESET}"
     fi
@@ -584,37 +659,49 @@ menu() {
           2) cmd_backup_list ;;
           3)
             cmd_backup_list
-            echo -ne "  ${BOLD}Filename:${RESET} "
-            fname=""
-            read -r fname
-            [ -n "${fname:-}" ] && cmd_backup_restore "$fname"
+            if [ ${#BACKUP_FILES[@]} -gt 0 ]; then
+              echo -ne "  ${BOLD}Restore which?${RESET} [1-${#BACKUP_FILES[@]}, 0 to cancel]: "
+              bnum=""
+              read -r bnum
+              if [ "${bnum:-0}" != "0" ] && [[ "${bnum:-}" =~ ^[0-9]+$ ]] && [ "$bnum" -ge 1 ] && [ "$bnum" -le "${#BACKUP_FILES[@]}" ]; then
+                cmd_backup_restore "${BACKUP_FILES[$((bnum-1))]}"
+              fi
+            fi
             ;;
         esac
         ;;
       9)
-        echo -e "  ${BOLD}1)${RESET} List online players"
-        echo -e "  ${BOLD}2)${RESET} Add operator"
-        echo -e "  ${BOLD}3)${RESET} Remove operator"
-        echo -e "  ${BOLD}4)${RESET} Add to whitelist"
-        echo -e "  ${BOLD}5)${RESET} Remove from whitelist"
-        echo -e "  ${BOLD}6)${RESET} Toggle whitelist on/off"
-        echo -e "  ${BOLD}7)${RESET} Show whitelist"
+        echo -e "  ${BOLD} 1)${RESET} List online players"
+        echo -e "  ${BOLD} 2)${RESET} Broadcast message"
+        echo -e "  ${BOLD} 3)${RESET} Kick player"
+        echo -e "  ${BOLD} 4)${RESET} Ban player"
+        echo -e "  ${BOLD} 5)${RESET} Unban player"
+        echo -e "  ${BOLD} 6)${RESET} Add operator"
+        echo -e "  ${BOLD} 7)${RESET} Remove operator"
+        echo -e "  ${BOLD} 8)${RESET} Add to whitelist"
+        echo -e "  ${BOLD} 9)${RESET} Remove from whitelist"
+        echo -e "  ${BOLD}10)${RESET} Toggle whitelist on/off"
+        echo -e "  ${BOLD}11)${RESET} Show whitelist"
         echo -ne "  ${CYAN}>${RESET} "
         sub=""
         read -r sub
         case "${sub:-}" in
           1) cmd_players ;;
-          2) cmd_op add ;;
-          3) cmd_op remove ;;
-          4) cmd_whitelist add ;;
-          5) cmd_whitelist remove ;;
-          6)
+          2) cmd_say ;;
+          3) cmd_kick ;;
+          4) cmd_ban add ;;
+          5) cmd_ban remove ;;
+          6) cmd_op add ;;
+          7) cmd_op remove ;;
+          8) cmd_whitelist add ;;
+          9) cmd_whitelist remove ;;
+          10)
             echo -ne "  ${BOLD}Enable or disable?${RESET} [on/off]: "
             toggle=""
             read -r toggle
             cmd_whitelist "${toggle:-on}"
             ;;
-          7) cmd_whitelist list ;;
+          11) cmd_whitelist list ;;
         esac
         ;;
       10) cmd_update ;;
@@ -650,6 +737,11 @@ case "${1:-}" in
     ;;
   update)    cmd_update ;;
   players)   cmd_players ;;
+  say)       shift; cmd_say "$*" ;;
+  kick)      cmd_kick "${2:-}" "${3:-}" ;;
+  ban)       cmd_ban add "${2:-}" ;;
+  unban)     cmd_ban remove "${2:-}" ;;
+  banlist)   cmd_ban list "" ;;
   op)        cmd_op add "${2:-}" ;;
   deop)      cmd_op remove "${2:-}" ;;
   whitelist) cmd_whitelist "${2:-list}" "${3:-}" ;;
@@ -671,6 +763,11 @@ case "${1:-}" in
     echo "    backup restore <f> Restore from backup file"
     echo "    update             Pull latest images and restart"
     echo "    players            List online players"
+    echo "    say <msg>          Broadcast message to all players"
+    echo "    kick <name>        Kick a player"
+    echo "    ban <name>         Ban a player"
+    echo "    unban <name>       Unban a player"
+    echo "    banlist            Show banned players"
     echo "    op <name>          Make player an operator"
     echo "    deop <name>        Remove operator status"
     echo "    whitelist add <n>  Add player to whitelist"

@@ -43,10 +43,19 @@ get_modrinth_projects() {
 }
 
 set_modrinth_projects() {
+  local val="$1"
   if grep -q '^MODRINTH_PROJECTS=' "$ENV_FILE" 2>/dev/null; then
-    sed -i "s/^MODRINTH_PROJECTS=.*/MODRINTH_PROJECTS=$1/" "$ENV_FILE"
+    local tmpfile="${ENV_FILE}.tmp"
+    while IFS= read -r line || [ -n "$line" ]; do
+      if [[ "$line" == MODRINTH_PROJECTS=* ]]; then
+        echo "MODRINTH_PROJECTS=${val}"
+      else
+        echo "$line"
+      fi
+    done < "$ENV_FILE" > "$tmpfile"
+    mv "$tmpfile" "$ENV_FILE"
   else
-    echo "MODRINTH_PROJECTS=$1" >> "$ENV_FILE"
+    echo "MODRINTH_PROJECTS=${val}" >> "$ENV_FILE"
   fi
 }
 
