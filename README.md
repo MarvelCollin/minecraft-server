@@ -60,12 +60,107 @@ All settings are controlled through `.env`. See `.env.example` for the full list
 | `ENABLE_WHITELIST` | Restrict join access to `WHITELIST` | `false` |
 | `WHITELIST` | Comma-separated usernames allowed to join | (empty) |
 | `OPS` | Comma-separated usernames granted operator | (empty) |
+| `MODS` | Comma-separated mod download URLs (alternative to `mods.txt`) | (empty) |
+| `REMOVE_OLD_MODS` | Remove previously downloaded mods before re-downloading on startup | `false` |
+| `MODRINTH_PROJECTS` | Comma-separated Modrinth slugs (e.g. `sodium,lithium`) | (empty) |
+| `MODRINTH_DOWNLOAD_DEPENDENCIES` | Auto-download mod dependencies: `required`, `optional`, `none` | `required` |
 | `RCON_PASSWORD` | Password for remote console access | (required) |
 | `BACKUP_INTERVAL` | How often the backup service runs | `6h` |
 | `BACKUP_RETENTION_DAYS` | How long backups are kept | `7` |
 | `PLAYIT_SECRET_KEY` | Auth key for the optional `playit` tunnel service | (empty, required only for the `playit` profile) |
 
 Full list of supported variables: https://docker-minecraft-server.readthedocs.io/en/latest/variables/
+
+## Mods
+
+Mods require a mod loader. Before adding any mods, set `SERVER_TYPE` in `.env` to `FORGE` or `FABRIC` (vanilla does not support mods):
+
+```
+SERVER_TYPE=FABRIC
+```
+
+Then recreate the container (`docker compose up -d`) so it installs the mod loader before adding mods.
+
+### Interactive mod manager
+
+Run the built-in mod manager for a guided menu:
+
+```
+bash scripts/mods.sh
+```
+
+```
+  ╔════════════════════════════════════════╗
+  ║        Minecraft Mod Manager           ║
+  ╚════════════════════════════════════════╝
+
+  1) Add mod by URL          any download link
+  2) Add mod from Modrinth   by slug name
+  3) Add mod from file       drop .jar into mods/
+  4) List all mods
+  5) Remove a mod
+  6) Exit
+```
+
+### Option 1: Add by URL
+
+Works with any download link — Modrinth, CurseForge, GitHub releases, or any direct `.jar` URL. The menu lets you paste multiple URLs one per line:
+
+```
+bash scripts/mods.sh
+# select 1, then paste URLs, press Enter on an empty line to finish
+```
+
+Or use the CLI directly for scripting:
+
+```
+bash scripts/mods.sh add https://cdn.modrinth.com/data/.../sodium-0.6.jar https://cdn.modrinth.com/data/.../lithium-0.14.jar
+```
+
+URLs are stored in `mods.txt` (one per line). The server downloads them automatically on startup.
+
+### Option 2: Add from Modrinth
+
+Type Modrinth project slugs (the short name in the URL, e.g. `modrinth.com/mod/sodium` → `sodium`). The server auto-resolves the correct version for your `SERVER_VERSION` and `SERVER_TYPE`:
+
+```
+bash scripts/mods.sh
+# select 2, then type: sodium lithium starlight
+```
+
+Or set them directly in `.env`:
+
+```
+MODRINTH_PROJECTS=sodium,lithium,starlight
+```
+
+Dependencies are downloaded automatically by default (`MODRINTH_DOWNLOAD_DEPENDENCIES=required`).
+
+### Option 3: Add from file
+
+If you already have `.jar` files downloaded from any source:
+
+1. Drop them into the `mods/` folder.
+2. Run `bash scripts/mods.sh`, select option 3.
+3. The script copies them into `data/mods/` where the server reads them.
+
+### Applying changes
+
+After adding or removing mods, restart the server:
+
+```
+docker compose restart minecraft
+```
+
+### Listing and removing mods
+
+```
+bash scripts/mods.sh list
+```
+
+Shows all mods from every source (URL mods in `mods.txt`, Modrinth slugs in `.env`, and local `.jar` files in `data/mods/`).
+
+To remove, run the manager and select option 5 — it shows a numbered list across all sources and lets you pick which to remove.
 
 ## Exposing the Server Publicly
 
