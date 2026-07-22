@@ -29,25 +29,32 @@ compose_cmd() {
 
 require_docker() {
   if ! command -v docker &>/dev/null; then
-    echo -e "  ${RED}Docker not found. Install from https://docs.docker.com/get-docker/${RESET}"
+    show_error "Docker not found" \
+      "Install Docker: https://docs.docker.com/get-docker/" \
+      "Then run: ./mc.sh setup"
     exit 1
   fi
   if ! docker info &>/dev/null; then
-    echo -e "  ${RED}Docker not running. Start Docker Desktop or the Docker daemon.${RESET}"
+    show_error "Docker is not running" \
+      "Start Docker Desktop (or the Docker daemon) and try again."
     exit 1
   fi
 }
 
 require_env() {
   if [ ! -f "$ENV_FILE" ]; then
-    echo -e "  ${RED}.env not found. Run: ./mc.sh setup${RESET}"
+    show_error ".env file not found" \
+      "Run the setup wizard first:" \
+      "  ./mc.sh setup"
     exit 1
   fi
 }
 
 require_running() {
   if ! docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^${CONTAINER}$"; then
-    echo -e "  ${RED}Server not running. Run: ./mc.sh start${RESET}"
+    show_error "Server is not running" \
+      "Start it first:" \
+      "  ./mc.sh start"
     exit 1
   fi
 }
@@ -60,6 +67,16 @@ env_get() {
   if [ -f "$ENV_FILE" ]; then
     sed -n "s/^$1=//p" "$ENV_FILE"
   fi
+}
+
+show_error() {
+  echo ""
+  echo -e "  ${RED}✗ $1${RESET}"
+  shift
+  for line in "$@"; do
+    echo -e "  ${DIM}$line${RESET}"
+  done
+  echo ""
 }
 
 env_set() {
@@ -394,7 +411,9 @@ cmd_backup_restore() {
   local target="${1:-}"
 
   if [ -z "$target" ]; then
-    echo -e "  ${RED}Specify a backup file. Run: ./mc.sh backup list${RESET}"
+    show_error "No backup file specified" \
+      "Usage: ./mc.sh backup restore <filename>" \
+      "Run ./mc.sh backup list to see available backups."
     return
   fi
 
@@ -404,8 +423,8 @@ cmd_backup_restore() {
   elif [ -f "$target" ]; then
     backup_path="$target"
   else
-    echo -e "  ${RED}Backup not found: $target${RESET}"
-    echo -e "  ${DIM}Run: ./mc.sh backup list${RESET}"
+    show_error "Backup not found: $target" \
+      "Run ./mc.sh backup list to see available backups."
     return
   fi
 
@@ -532,19 +551,26 @@ cmd_kick() {
 cmd_ban() {
   local action="${1:-add}"
   local name="${2:-}"
-  if [ -z "$name" ]; then
-    echo -ne "  ${BOLD}Username:${RESET} "
-    read -r name
-    [ -z "${name:-}" ] && return
-  fi
+
   require_docker
   require_running
+
   case "$action" in
     add)
+      if [ -z "$name" ]; then
+        echo -ne "  ${BOLD}Username:${RESET} "
+        read -r name
+        [ -z "${name:-}" ] && return
+      fi
       rcon ban "$name"
       echo -e "  ${GREEN}✓ $name banned${RESET}"
       ;;
     remove)
+      if [ -z "$name" ]; then
+        echo -ne "  ${BOLD}Username:${RESET} "
+        read -r name
+        [ -z "${name:-}" ] && return
+      fi
       rcon pardon "$name"
       echo -e "  ${GREEN}✓ $name unbanned${RESET}"
       ;;
@@ -592,6 +618,15 @@ cmd_whitelist() {
     list)
       result=$(rcon whitelist list 2>/dev/null)
       echo -e "  ${BOLD}${result:-Whitelist is empty}${RESET}"
+      ;;
+    *)
+      show_error "Unknown whitelist action: $action" \
+        "Usage: ./mc.sh whitelist <add|remove|list|on|off> [name]" \
+        "Examples:" \
+        "  ./mc.sh whitelist add Steve" \
+        "  ./mc.sh whitelist remove Steve" \
+        "  ./mc.sh whitelist list" \
+        "  ./mc.sh whitelist on"
       ;;
   esac
 }
@@ -730,9 +765,18 @@ case "${1:-}" in
   mods)      shift; cmd_mods "$@" ;;
   backup)
     case "${2:-}" in
+      "")      cmd_backup ;;
       list)    cmd_backup_list ;;
       restore) cmd_backup_restore "${3:-}" ;;
-      *)       cmd_backup ;;
+      *)
+        show_error "Unknown backup action: ${2}" \
+          "Usage: ./mc.sh backup [list|restore <file>]" \
+          "Examples:" \
+          "  ./mc.sh backup              # trigger manual backup" \
+          "  ./mc.sh backup list         # list available backups" \
+          "  ./mc.sh backup restore world-2024-01-01.tar.gz"
+        exit 1
+        ;;
     esac
     ;;
   update)    cmd_update ;;
@@ -780,8 +824,22 @@ case "${1:-}" in
     ;;
   "")        menu ;;
   *)
-    echo -e "  ${RED}Unknown command: $1${RESET}"
-    echo -e "  ${DIM}Run: ./mc.sh help${RESET}"
+    COMMANDS="setup start stop restart status logs console mods backup update players say kick ban unban banlist op deop whitelist help"
+    suggestion=""
+    for cmd in $COMMANDS; do
+      if [[ "$cmd" == "$1"* ]] || [[ "$1" == "$cmd"* ]]; then
+        suggestion="$cmd"
+        break
+      fi
+    done
+    echo ""
+    echo -e "  ${RED}✗ Unknown command: $1${RESET}"
+    if [ -n "$suggestion" ]; then
+      echo -e "  ${DIM}Did you mean: ${BOLD}./mc.sh ${suggestion}${RESET}${DIM}?${RESET}"
+    fi
+    echo ""
+    echo -e "  ${DIM}Run ${BOLD}./mc.sh help${RESET}${DIM} for all commands, or ${BOLD}./mc.sh${RESET}${DIM} for interactive menu.${RESET}"
+    echo ""
     exit 1
     ;;
 esac
