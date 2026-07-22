@@ -11,25 +11,25 @@ A self-hosted, Dockerized Minecraft server with automated backups, ready to be e
 
 ## Quick Start
 
-1. Run the setup script. It creates `.env` from the template and generates a random `RCON_PASSWORD` for you:
+1. Run the setup wizard. It checks prerequisites, creates `.env`, generates a random `RCON_PASSWORD`, and walks you through server configuration:
 
    ```
-   ./setup.sh
+   ./server.sh setup
    ```
 
-2. (Optional) Open `.env` and adjust `MOTD`, `DIFFICULTY`, `GAME_MODE`, `WHITELIST`, `OPS`, etc. The defaults work as-is.
-
-3. Start the server:
+2. Start the server:
 
    ```
-   docker compose up -d
+   ./server.sh start
    ```
 
-4. Check the logs until the server reports "Done":
+3. Check the logs until the server reports "Done":
 
    ```
-   docker compose logs -f minecraft
+   ./server.sh logs
    ```
+
+Run `./server.sh` with no arguments for an interactive menu, or `./server.sh help` for all available commands.
 
 `docker compose up` refuses to start with a clear error if `.env` is missing or `RCON_PASSWORD` was never set, instead of silently running RCON with a blank password.
 
@@ -70,6 +70,31 @@ All settings are controlled through `.env`. See `.env.example` for the full list
 | `PLAYIT_SECRET_KEY` | Auth key for the optional `playit` tunnel service | (empty, required only for the `playit` profile) |
 
 Full list of supported variables: https://docker-minecraft-server.readthedocs.io/en/latest/variables/
+
+## Server Management
+
+Everything goes through `server.sh`:
+
+```
+./server.sh setup        # Prerequisites check + interactive config
+./server.sh start        # Start server (auto-detects playit.gg)
+./server.sh stop         # Graceful save + stop
+./server.sh restart      # Restart
+./server.sh status       # Online/offline, uptime, health, players
+./server.sh logs         # Follow server logs
+./server.sh console      # RCON console
+./server.sh mods         # Mod manager
+./server.sh backup       # Trigger manual backup
+./server.sh backup list  # List backups with sizes and dates
+./server.sh backup restore <file>  # Restore from backup
+./server.sh update       # Pull latest images + restart
+./server.sh players      # List online players
+./server.sh op <name>    # Make player an operator
+./server.sh deop <name>  # Remove operator
+./server.sh whitelist add|remove|list|on|off
+```
+
+Or run `./server.sh` with no arguments for an interactive menu.
 
 ## Mods
 
@@ -194,20 +219,17 @@ docker exec minecraft-server rcon-cli save-all flush
 ## Updating
 
 ```
-docker compose pull
-docker compose up -d
+./server.sh update
 ```
+
+This pulls the latest images and restarts. Equivalent to `docker compose pull && docker compose up -d`.
 
 ## Stopping
 
 ```
-docker compose down
+./server.sh stop
 ```
 
-If you're running the `playit` profile, plain `docker compose down` will **not** stop it — profiles aren't remembered between commands, so it only targets `minecraft` and `backup`, leaving `minecraft-playit` running in the background. To stop everything:
-
-```
-docker compose --profile playit down
-```
+`server.sh` auto-detects whether playit.gg is configured and includes it in stop/start commands, so you don't need to remember `--profile playit`.
 
 World data in `./data` is preserved across restarts and updates since it lives on the host, not inside the container.
